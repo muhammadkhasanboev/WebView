@@ -1,58 +1,90 @@
 package com.bignerdranch.android.webview;
 
+import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
+import android.view.View;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.Button;
+import android.widget.LinearLayout;
 
 import androidx.activity.EdgeToEdge;
+import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
-import androidx.activity.OnBackPressedCallback;
 
 public class MainActivity extends AppCompatActivity {
+
     private WebView webView;
+    private LinearLayout noConnectionLayout;
+    private Button retryButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
+
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
 
-        webView = (WebView) findViewById(R.id.web_view);
-        webView.setWebViewClient(new WebViewClient()); //prevents opening in browser
+        webView = findViewById(R.id.web_view);
+        noConnectionLayout = findViewById(R.id.no_connection_layout);
+        retryButton = findViewById(R.id.retry_button);
 
+        // Configure WebView
         WebSettings webSettings = webView.getSettings();
-        webSettings.setDomStorageEnabled(true); // For modern HTML5 storage
-        webSettings.setDatabaseEnabled(true);   // Optional, for legacy localStorage
-        webSettings.setJavaScriptEnabled(true); // Only if site needs JS
+        webSettings.setJavaScriptEnabled(true);
+        webSettings.setDomStorageEnabled(true);
+        webSettings.setDatabaseEnabled(true);
+        webSettings.setCacheMode(WebSettings.LOAD_DEFAULT);
+        webView.setWebViewClient(new WebViewClient()); // prevent browser redirect
 
-// Enable smart caching behavior
-        webSettings.setCacheMode(WebSettings.LOAD_DEFAULT); // Uses cache if valid
+        // Retry button behavior
+        retryButton.setOnClickListener(v -> checkConnectionAndLoad());
 
+        // Initial check
+        checkConnectionAndLoad();
 
-        webView.loadUrl("https://ais.ajou.uz/en");
-
+        // Handle back navigation inside WebView
         this.getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
                 if (webView.canGoBack()) {
                     webView.goBack();
                 } else {
-                    finish(); // or requireActivity().finish() in a fragment
+                    finish();
                 }
             }
         });
-
     }
 
+    private void checkConnectionAndLoad() {
+        if (isConnected()) {
+            noConnectionLayout.setVisibility(View.GONE);
+            webView.setVisibility(View.VISIBLE);
+            loadWebView();
+        } else {
+            webView.setVisibility(View.GONE);
+            noConnectionLayout.setVisibility(View.VISIBLE);
+        }
+    }
 
+    private boolean isConnected() {
+        ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+        return activeNetwork != null && activeNetwork.isConnected();
+    }
 
+    private void loadWebView() {
+        webView.loadUrl("https://ais.ajou.uz/en");
+    }
 }
