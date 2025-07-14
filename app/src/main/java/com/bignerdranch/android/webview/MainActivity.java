@@ -42,11 +42,17 @@ public class MainActivity extends AppCompatActivity {
 
         // Configure WebView
         WebSettings webSettings = webView.getSettings();
-        webSettings.setJavaScriptEnabled(true);
         webSettings.setDomStorageEnabled(true);
         webSettings.setDatabaseEnabled(true);
         webSettings.setCacheMode(WebSettings.LOAD_DEFAULT);
-        webView.setWebViewClient(new WebViewClient()); // prevent browser redirect
+        webSettings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
+        webSettings.setLoadsImagesAutomatically(true);
+        webSettings.setAllowFileAccess(true);
+        webSettings.setAllowContentAccess(true);
+
+
+        webView.setWebViewClient(new WebViewClient());
+        webView.loadUrl("https://ais.ajou.uz/en/timeline-event/view-student-all?id=1084");// prevent browser redirect
 
         // Retry button behavior
         retryButton.setOnClickListener(v -> checkConnectionAndLoad());
